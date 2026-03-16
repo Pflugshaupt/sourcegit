@@ -234,6 +234,21 @@
             </DataTemplate>
           </ContentControl.DataTemplates>
         </ContentControl>
+
+        <ScrollViewer IsVisible="{Binding DetailContexts, Converter={x:Static ObjectConverters.IsNotNull}}"
+                      Background="{DynamicResource Brush.Window}"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+          <ItemsControl ItemsSource="{Binding DetailContexts}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:DiffContext">
+                <Border Margin="0,0,0,4">
+                  <v:DiffView IsStacked="True"/>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
       </Grid>
 
       <!-- Splitter -->

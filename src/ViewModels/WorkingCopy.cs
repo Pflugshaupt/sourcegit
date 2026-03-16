@@ -170,7 +170,7 @@ namespace SourceGit.ViewModels
                     if (value == null || value.Count == 0)
                     {
                         if (_selectedStaged == null || _selectedStaged.Count == 0)
-                            SetDetail(null, true);
+                            SetDetailAll();
                     }
                     else
                     {
@@ -180,7 +180,7 @@ namespace SourceGit.ViewModels
                         if (value.Count == 1)
                             SetDetail(value[0], true);
                         else
-                            SetDetail(null, true);
+                            SetDetailMulti(value, true);
                     }
                 }
             }
@@ -196,7 +196,7 @@ namespace SourceGit.ViewModels
                     if (value == null || value.Count == 0)
                     {
                         if (_selectedUnstaged == null || _selectedUnstaged.Count == 0)
-                            SetDetail(null, false);
+                            SetDetailAll();
                     }
                     else
                     {
@@ -206,7 +206,7 @@ namespace SourceGit.ViewModels
                         if (value.Count == 1)
                             SetDetail(value[0], false);
                         else
-                            SetDetail(null, false);
+                            SetDetailMulti(value, false);
                     }
                 }
             }
@@ -216,6 +216,12 @@ namespace SourceGit.ViewModels
         {
             get => _detailContext;
             private set => SetProperty(ref _detailContext, value);
+        }
+
+        public List<DiffContext> DetailContexts
+        {
+            get => _detailContexts;
+            private set => SetProperty(ref _detailContexts, value);
         }
 
         public string CommitMessage
@@ -756,10 +762,14 @@ namespace SourceGit.ViewModels
         {
             if (_selectedUnstaged.Count == 1)
                 SetDetail(_selectedUnstaged[0], true);
+            else if (_selectedUnstaged.Count > 1)
+                SetDetailMulti(_selectedUnstaged, true);
             else if (_selectedStaged.Count == 1)
                 SetDetail(_selectedStaged[0], false);
+            else if (_selectedStaged.Count > 1)
+                SetDetailMulti(_selectedStaged, false);
             else
-                SetDetail(null, false);
+                SetDetailAll();
         }
 
         private void UpdateInProgressState()
@@ -810,12 +820,45 @@ namespace SourceGit.ViewModels
             if (_isLoadingData)
                 return;
 
+            DetailContexts = null;
             if (change == null)
                 DetailContext = null;
             else if (change.IsConflicted)
                 DetailContext = new Conflict(_repo, this, change);
             else
                 DetailContext = new DiffContext(_repo.FullPath, new Models.DiffOption(change, isUnstaged), _detailContext as DiffContext);
+        }
+
+        private void SetDetailMulti(List<Models.Change> changes, bool isUnstaged)
+        {
+            if (_isLoadingData)
+                return;
+
+            DetailContext = null;
+            var contexts = new List<DiffContext>(changes.Count);
+            foreach (var change in changes)
+                contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(change, isUnstaged)));
+            DetailContexts = contexts;
+        }
+
+        private void SetDetailAll()
+        {
+            if (_isLoadingData)
+                return;
+
+            DetailContext = null;
+            if (_visibleUnstaged.Count == 0 && _visibleStaged.Count == 0)
+            {
+                DetailContexts = null;
+                return;
+            }
+
+            var contexts = new List<DiffContext>(_visibleUnstaged.Count + _visibleStaged.Count);
+            foreach (var change in _visibleUnstaged)
+                contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(change, true)));
+            foreach (var change in _visibleStaged)
+                contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(change, false)));
+            DetailContexts = contexts;
         }
 
         private bool IsChanged(List<Models.Change> old, List<Models.Change> cur)
@@ -850,6 +893,7 @@ namespace SourceGit.ViewModels
         private List<Models.Change> _selectedUnstaged = [];
         private List<Models.Change> _selectedStaged = [];
         private object _detailContext = null;
+        private List<DiffContext> _detailContexts = null;
         private string _filter = string.Empty;
         private string _commitMessage = string.Empty;
 
