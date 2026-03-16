@@ -208,7 +208,13 @@
   ${files} Paths of changed files
   ${files:N} Max N number of paths of changed files
   ${pure_files} Likes ${files}, but only pure file names
-  ${pure_files:N} Likes ${files:N}, but without folders</x:String>
+  ${pure_files:N} Likes ${files:N}, but without folders
+
+Regex transform syntax:
+  ${variable/pattern/replacement}
+
+  Applies a regex substitution to the variable's value.
+  Use \/ to escape a literal slash inside pattern or replacement.</x:String>
   <x:String x:Key="Text.Configure.CommitMessageTemplate.Content" xml:space="preserve">Template Content:</x:String>
   <x:String x:Key="Text.Configure.CommitMessageTemplate.Name" xml:space="preserve">Template Name:</x:String>
   <x:String x:Key="Text.Configure.CustomAction" xml:space="preserve">CUSTOM ACTION</x:String>
