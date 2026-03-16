@@ -90,6 +90,21 @@
           </DataTemplate>
         </ContentControl.DataTemplates>
       </ContentControl>
+
+      <ScrollViewer IsVisible="{Binding DiffContexts, Converter={x:Static ObjectConverters.IsNotNull}}"
+                    Background="{DynamicResource Brush.Window}"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Auto">
+        <ItemsControl ItemsSource="{Binding DiffContexts}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="vm:DiffContext">
+              <Border Margin="0,0,0,4">
+                <v:DiffView IsStacked="True"/>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
     </Grid>
   </Grid>
 </UserControl>

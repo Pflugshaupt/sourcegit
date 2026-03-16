@@ -10,7 +10,7 @@
              x:Class="SourceGit.Views.DiffView"
              x:DataType="vm:DiffContext">
   <Border BorderThickness="1" BorderBrush="{DynamicResource Brush.Border2}" Background="{DynamicResource Brush.Window}">
-    <Grid RowDefinitions="26,*">
+    <Grid x:Name="ContentGrid" RowDefinitions="26,*">
       <!-- Toolbar -->
       <Border Grid.Row="0" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Brush.Border2}">
         <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">

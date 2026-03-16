@@ -71,17 +71,7 @@ namespace SourceGit.ViewModels
             set
             {
                 if (SetProperty(ref _selectedChanges, value))
-                {
-                    if (value is { Count: 1 })
-                    {
-                        var option = new Models.DiffOption(GetSHA(_startPoint), GetSHA(_endPoint), value[0]);
-                        DiffContext = new DiffContext(_repo.FullPath, option, _diffContext);
-                    }
-                    else
-                    {
-                        DiffContext = null;
-                    }
-                }
+                    RefreshDiffContexts(value);
             }
         }
 
@@ -99,6 +89,12 @@ namespace SourceGit.ViewModels
         {
             get => _diffContext;
             private set => SetProperty(ref _diffContext, value);
+        }
+
+        public List<DiffContext> DiffContexts
+        {
+            get => _diffContexts;
+            private set => SetProperty(ref _diffContexts, value);
         }
 
         public RevisionCompare(Repository repo, Models.Commit startPoint, Models.Commit endPoint)
@@ -119,6 +115,7 @@ namespace SourceGit.ViewModels
             _selectedChanges?.Clear();
             _searchFilter = null;
             _diffContext = null;
+            _diffContexts = null;
         }
 
         public void OpenChangeWithExternalDiffTool(Models.Change change)
@@ -388,6 +385,32 @@ namespace SourceGit.ViewModels
         private List<Models.Change> _visibleChanges = null;
         private List<Models.Change> _selectedChanges = null;
         private string _searchFilter = string.Empty;
+        private void RefreshDiffContexts(List<Models.Change> selected)
+        {
+            if (selected is { Count: 1 })
+            {
+                DiffContexts = null;
+                var option = new Models.DiffOption(GetSHA(_startPoint), GetSHA(_endPoint), selected[0]);
+                DiffContext = new DiffContext(_repo.FullPath, option, _diffContext);
+            }
+            else
+            {
+                DiffContext = null;
+                var changes = (selected == null || selected.Count == 0) ? _visibleChanges : selected;
+                if (changes == null || changes.Count == 0)
+                {
+                    DiffContexts = null;
+                    return;
+                }
+
+                var contexts = new List<DiffContext>(changes.Count);
+                foreach (var change in changes)
+                    contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(GetSHA(_startPoint), GetSHA(_endPoint), change)));
+                DiffContexts = contexts;
+            }
+        }
+
         private DiffContext _diffContext = null;
+        private List<DiffContext> _diffContexts = null;
     }
 }

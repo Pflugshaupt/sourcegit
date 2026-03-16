@@ -62,12 +62,7 @@ namespace SourceGit.ViewModels
             set
             {
                 if (SetProperty(ref _selectedChanges, value))
-                {
-                    if (value is { Count: 1 })
-                        DiffContext = new DiffContext(_repo, new Models.DiffOption(_based, _to, value[0]), _diffContext);
-                    else
-                        DiffContext = null;
-                }
+                    RefreshDiffContexts(value);
             }
         }
 
@@ -85,6 +80,12 @@ namespace SourceGit.ViewModels
         {
             get => _diffContext;
             private set => SetProperty(ref _diffContext, value);
+        }
+
+        public List<DiffContext> DiffContexts
+        {
+            get => _diffContexts;
+            private set => SetProperty(ref _diffContexts, value);
         }
 
         public Compare(Repository repo, object based, object to)
@@ -359,6 +360,30 @@ namespace SourceGit.ViewModels
             };
         }
 
+        private void RefreshDiffContexts(List<Models.Change> selected)
+        {
+            if (selected is { Count: 1 })
+            {
+                DiffContexts = null;
+                DiffContext = new DiffContext(_repo, new Models.DiffOption(_based, _to, selected[0]), _diffContext);
+            }
+            else
+            {
+                DiffContext = null;
+                var changes = (selected == null || selected.Count == 0) ? _visibleChanges : selected;
+                if (changes == null || changes.Count == 0)
+                {
+                    DiffContexts = null;
+                    return;
+                }
+
+                var contexts = new List<DiffContext>(changes.Count);
+                foreach (var change in changes)
+                    contexts.Add(new DiffContext(_repo, new Models.DiffOption(_based, _to, change)));
+                DiffContexts = contexts;
+            }
+        }
+
         private string _repo;
         private bool _isLoading = true;
         private bool _canResetFiles = false;
@@ -374,5 +399,6 @@ namespace SourceGit.ViewModels
         private List<Models.Change> _selectedChanges = null;
         private string _searchFilter = string.Empty;
         private DiffContext _diffContext = null;
+        private List<DiffContext> _diffContexts = null;
     }
 }

@@ -41,8 +41,8 @@ namespace SourceGit.ViewModels
                 {
                     _sharedData.ActiveTabIndex = value;
 
-                    if (value == 1 && DiffContext == null && _selectedChanges is { Count: 1 })
-                        DiffContext = new DiffContext(_repo.FullPath, new Models.DiffOption(_commit, _selectedChanges[0]));
+                    if (value == 1 && _diffContext == null && _diffContexts == null)
+                        RefreshDiffContexts(_selectedChanges);
                 }
             }
         }
@@ -103,10 +103,13 @@ namespace SourceGit.ViewModels
             {
                 if (SetProperty(ref _selectedChanges, value))
                 {
-                    if (ActiveTabIndex != 1 || value is not { Count: 1 })
+                    if (ActiveTabIndex != 1)
+                    {
                         DiffContext = null;
+                        DiffContexts = null;
+                    }
                     else
-                        DiffContext = new DiffContext(_repo.FullPath, new Models.DiffOption(_commit, value[0]), _diffContext);
+                        RefreshDiffContexts(value);
                 }
             }
         }
@@ -115,6 +118,12 @@ namespace SourceGit.ViewModels
         {
             get => _diffContext;
             private set => SetProperty(ref _diffContext, value);
+        }
+
+        public List<DiffContext> DiffContexts
+        {
+            get => _diffContexts;
+            private set => SetProperty(ref _diffContexts, value);
         }
 
         public string SearchChangeFilter
@@ -184,6 +193,7 @@ namespace SourceGit.ViewModels
             _signInfo = null;
             _searchChangeFilter = null;
             _diffContext = null;
+            _diffContexts = null;
             _viewRevisionFileContent = null;
             _cancellationSource = null;
             _requestingRevisionFiles = false;
@@ -758,6 +768,32 @@ namespace SourceGit.ViewModels
             }
         }
 
+        private void RefreshDiffContexts(List<Models.Change> selected)
+        {
+            if (selected is { Count: 1 })
+            {
+                // Single file: use DiffContext so it fills the full panel height
+                DiffContexts = null;
+                DiffContext = new DiffContext(_repo.FullPath, new Models.DiffOption(_commit, selected[0]), _diffContext);
+            }
+            else
+            {
+                // Multiple or none selected: stack all in DiffContexts
+                DiffContext = null;
+                var changes = (selected == null || selected.Count == 0) ? _visibleChanges : selected;
+                if (changes == null || changes.Count == 0)
+                {
+                    DiffContexts = null;
+                    return;
+                }
+
+                var contexts = new List<DiffContext>(changes.Count);
+                foreach (var change in changes)
+                    contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(_commit, change)));
+                DiffContexts = contexts;
+            }
+        }
+
         [GeneratedRegex(@"\b(https?://|ftp://)[\w\d\._/\-~%@()+:?&=#!]*[\w\d/]")]
         private static partial Regex REG_URL_FORMAT();
 
@@ -778,6 +814,7 @@ namespace SourceGit.ViewModels
         private List<Models.Change> _selectedChanges = null;
         private string _searchChangeFilter = string.Empty;
         private DiffContext _diffContext = null;
+        private List<DiffContext> _diffContexts = null;
         private string _viewRevisionFilePath = string.Empty;
         private object _viewRevisionFileContent = null;
         private CancellationTokenSource _cancellationSource = null;
