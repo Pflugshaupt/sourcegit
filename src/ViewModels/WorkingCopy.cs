@@ -835,9 +835,10 @@ namespace SourceGit.ViewModels
                 return;
 
             DetailContext = null;
+            var perFileLimit = 10000 / changes.Count;
             var contexts = new List<DiffContext>(changes.Count);
             foreach (var change in changes)
-                contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(change, isUnstaged)));
+                contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(change, isUnstaged), maxLines: perFileLimit));
             DetailContexts = contexts;
         }
 
@@ -853,11 +854,13 @@ namespace SourceGit.ViewModels
                 return;
             }
 
-            var contexts = new List<DiffContext>(_visibleUnstaged.Count + _visibleStaged.Count);
+            var totalCount = _visibleUnstaged.Count + _visibleStaged.Count;
+            var perFileLimit = 10000 / totalCount;
+            var contexts = new List<DiffContext>(totalCount);
             foreach (var change in _visibleUnstaged)
-                contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(change, true)));
+                contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(change, true), maxLines: perFileLimit));
             foreach (var change in _visibleStaged)
-                contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(change, false)));
+                contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(change, false), maxLines: perFileLimit));
             DetailContexts = contexts;
         }
 

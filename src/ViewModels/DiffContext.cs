@@ -83,10 +83,11 @@ namespace SourceGit.ViewModels
             private set => SetProperty(ref _unifiedLines, value);
         }
 
-        public DiffContext(string repo, Models.DiffOption option, DiffContext previous = null)
+        public DiffContext(string repo, Models.DiffOption option, DiffContext previous = null, int maxLines = 0)
         {
             _repo = repo;
             _option = option;
+            _maxLines = maxLines;
 
             if (previous != null)
             {
@@ -194,7 +195,14 @@ namespace SourceGit.ViewModels
                     }
 
                     if (!isSubmodule)
+                    {
+                        if (_maxLines > 0 && latest.TextDiff.Lines.Count > _maxLines)
+                        {
+                            latest.TextDiff.Lines.RemoveRange(_maxLines, latest.TextDiff.Lines.Count - _maxLines);
+                            latest.TextDiff.Lines.Add(new Models.TextDiffLine(Models.TextDiffLineType.Indicator, $"... diff truncated at {_maxLines} lines", 0, 0));
+                        }
                         rs = latest.TextDiff;
+                    }
                 }
                 else if (latest.IsBinary)
                 {
@@ -330,6 +338,7 @@ namespace SourceGit.ViewModels
         private readonly int _entireFileLine = 999999999;
         private readonly string _repo;
         private readonly Models.DiffOption _option = null;
+        private readonly int _maxLines = 0;
         private string _fileModeChange = string.Empty;
         private int _unifiedLines = 4;
         private bool _isTextDiff = false;
