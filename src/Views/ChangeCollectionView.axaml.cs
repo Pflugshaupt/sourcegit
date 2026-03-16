@@ -33,6 +33,31 @@ namespace SourceGit.Views
     {
         protected override Type StyleKeyOverride => typeof(ListBox);
 
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            AddHandler(PointerPressedEvent, OnPreviewPointerPressed, RoutingStrategies.Tunnel);
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+        {
+            RemoveHandler(PointerPressedEvent, OnPreviewPointerPressed);
+            base.OnDetachedFromVisualTree(e);
+        }
+
+        private void OnPreviewPointerPressed(object sender, PointerPressedEventArgs e)
+        {
+            if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed || e.KeyModifiers != KeyModifiers.None)
+                return;
+
+            var item = (e.Source as Control)?.FindAncestorOfType<ListBoxItem>(includeSelf: true);
+            if (item == null || (item.IsSelected && SelectedItems.Count == 1))
+            {
+                SelectedItems.Clear();
+                e.Handled = true;
+            }
+        }
+
         protected override void OnKeyDown(KeyEventArgs e)
         {
             if (SelectedItems is [ViewModels.ChangeTreeNode node])

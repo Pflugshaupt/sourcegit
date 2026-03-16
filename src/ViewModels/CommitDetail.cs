@@ -570,10 +570,7 @@ namespace SourceGit.ViewModels
                         Changes = changes;
                         VisibleChanges = visible;
 
-                        if (visible.Count == 0)
-                            SelectedChanges = null;
-                        else
-                            SelectedChanges = [VisibleChanges[0]];
+                        SelectedChanges = null;
                     });
                 }
             }, token);
