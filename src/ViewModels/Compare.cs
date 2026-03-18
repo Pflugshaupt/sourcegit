@@ -377,7 +377,7 @@ namespace SourceGit.ViewModels
                     return;
                 }
 
-                var perFileLimit = 10000 / changes.Count;
+                var perFileLimit = DiffContext.MAX_DIFF_LINES_PER_FILE / changes.Count;
                 var contexts = new List<DiffContext>(changes.Count);
                 foreach (var change in changes)
                     contexts.Add(new DiffContext(_repo, new Models.DiffOption(_based, _to, change), maxLines: perFileLimit));

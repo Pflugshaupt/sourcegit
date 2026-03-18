@@ -8,6 +8,7 @@ namespace SourceGit.ViewModels
 {
     public class DiffContext : ObservableObject
     {
+        public const int MAX_DIFF_LINES_PER_FILE = 5000;
         public string Title
         {
             get;
