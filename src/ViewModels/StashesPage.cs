@@ -93,7 +93,7 @@ namespace SourceGit.ViewModels
             private set
             {
                 if (SetProperty(ref _changes, value))
-                    SelectedChanges = value is { Count: > 0 } ? [value[0]] : [];
+                    SelectedChanges = [];
             }
         }
 
@@ -103,14 +103,7 @@ namespace SourceGit.ViewModels
             set
             {
                 if (SetProperty(ref _selectedChanges, value))
-                {
-                    if (value is not { Count: 1 })
-                        DiffContext = null;
-                    else if (_untracked.Contains(value[0]))
-                        DiffContext = new DiffContext(_repo.FullPath, new Models.DiffOption(_selectedStash.UntrackedParent, _selectedStash.Parents[2], value[0]), _diffContext);
-                    else
-                        DiffContext = new DiffContext(_repo.FullPath, new Models.DiffOption(_selectedStash.Parents[0], _selectedStash.SHA, value[0]), _diffContext);
-                }
+                    RefreshDiffContexts(value);
             }
         }
 
@@ -118,6 +111,12 @@ namespace SourceGit.ViewModels
         {
             get => _diffContext;
             private set => SetProperty(ref _diffContext, value);
+        }
+
+        public List<DiffContext> DiffContexts
+        {
+            get => _diffContexts;
+            private set => SetProperty(ref _diffContexts, value);
         }
 
         public StashesPage(Repository repo)
@@ -286,6 +285,40 @@ namespace SourceGit.ViewModels
             }
         }
 
+        private void RefreshDiffContexts(List<Models.Change> selected)
+        {
+            if (selected is { Count: 1 })
+            {
+                DiffContexts = null;
+                var change = selected[0];
+                if (_untracked.Contains(change))
+                    DiffContext = new DiffContext(_repo.FullPath, new Models.DiffOption(_selectedStash.UntrackedParent, _selectedStash.Parents[2], change), _diffContext);
+                else
+                    DiffContext = new DiffContext(_repo.FullPath, new Models.DiffOption(_selectedStash.Parents[0], _selectedStash.SHA, change), _diffContext);
+            }
+            else
+            {
+                DiffContext = null;
+                var changes = (selected == null || selected.Count == 0) ? _changes : selected;
+                if (changes == null || changes.Count == 0)
+                {
+                    DiffContexts = null;
+                    return;
+                }
+
+                var perFileLimit = 10000 / changes.Count;
+                var contexts = new List<DiffContext>(changes.Count);
+                foreach (var change in changes)
+                {
+                    if (_untracked.Contains(change))
+                        contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(_selectedStash.UntrackedParent, _selectedStash.Parents[2], change), maxLines: perFileLimit));
+                    else
+                        contexts.Add(new DiffContext(_repo.FullPath, new Models.DiffOption(_selectedStash.Parents[0], _selectedStash.SHA, change), maxLines: perFileLimit));
+                }
+                DiffContexts = contexts;
+            }
+        }
+
         private Repository _repo = null;
         private List<Models.Stash> _stashes = [];
         private List<Models.Stash> _visibleStashes = [];
@@ -295,5 +328,6 @@ namespace SourceGit.ViewModels
         private List<Models.Change> _untracked = [];
         private List<Models.Change> _selectedChanges = [];
         private DiffContext _diffContext = null;
+        private List<DiffContext> _diffContexts = null;
     }
 }
